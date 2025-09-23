@@ -52,18 +52,30 @@ void btn_task(void* p) {
     gpio_set_dir(BTN_PIN_Y,GPIO_IN);
     gpio_pull_up(BTN_PIN_Y);
 
+    gpio_set_irq_enabled_with_callback(BTN_PIN_R, GPIO_IRQ_EDGE_FALL, true, &btn_callback);
+    gpio_set_irq_enabled(BTN_PIN_Y, GPIO_IRQ_EDGE_FALL, true);
+    
     int id;
 
-
+    int flag_r = 0;
+    int flag_y = 0;
     while (true) {
         if(xQueueReceive(xQueueButId, &id, pdMS_TO_TICKS(200))){
             if(id == 0){
-                xSemaphoreGive(xSemaphoreLedR);
+                //xSemaphoreGive(xSemaphoreLedR);
+                flag_r = !flag_r;
             }
             if(id == 1){
-                xSemaphoreGive(xSemaphoreLedY);
+                //xSemaphoreGive(xSemaphoreLedY);
+                flag_y = !flag_y;
             }
 
+        }
+        if(flag_r){
+            xSemaphoreGive(xSemaphoreLedR);
+        }
+        if(flag_y){
+            xSemaphoreGive(xSemaphoreLedY);
         }
 
     }
@@ -77,7 +89,7 @@ void led_r_task(void *p){
     int delay = 100;
 
     while(1){
-        if(xSemaphoreTake(xSemaphoreLedR, pdMS_TO_TICKS(300) == pdTRUE)){
+        if(xSemaphoreTake(xSemaphoreLedR, pdMS_TO_TICKS(300)) == pdTRUE){
             gpio_put(LED_PIN_R,1);
             vTaskDelay(pdMS_TO_TICKS(delay));
             gpio_put(LED_PIN_R,0);
@@ -94,7 +106,7 @@ void led_y_task(void *p){
     int delay = 100;
 
     while(1){
-        if(xSemaphoreTake(xSemaphoreLedY, pdMS_TO_TICKS(300) == pdTRUE)){
+        if(xSemaphoreTake(xSemaphoreLedY, pdMS_TO_TICKS(300)) == pdTRUE){
             gpio_put(LED_PIN_Y,1);
             vTaskDelay(pdMS_TO_TICKS(delay));
             gpio_put(LED_PIN_Y,0);
